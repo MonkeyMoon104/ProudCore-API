@@ -6,13 +6,10 @@ on:
       - "v*"
 
 jobs:
-
   publish:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -30,10 +27,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H IP_DELLA_VPS >> ~/.ssh/known_hosts
+          ssh-keyscan -H 92.112.127.240 >> ~/.ssh/known_hosts
 
       - name: Publish artifact
         run: ./gradlew publish --no-daemon
 
       - name: Finalize deploy
-        run: ssh -i ~/.ssh/id_rsa root@IP_DELLA_VPS "/usr/local/bin/maven-deploy.sh"
+        run: ssh -i ~/.ssh/id_rsa root@92.112.127.240 "/usr/local/bin/maven-deploy.sh"

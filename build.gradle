@@ -55,7 +55,7 @@ publishing {
     repositories {
 
         maven {
-            url = uri("scp://root@IP_DELLA_TUA_VPS:/opt/maven-staging")
+            url = uri("scp://root@92.112.127.240:/opt/maven-staging")
         }
 
     }

@@ -32,8 +32,11 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Publish artifact
+      - name: Build local Maven repo
         run: ./gradlew publish --no-daemon
 
+      - name: Upload repo to staging
+        run: rsync -av --delete -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes" build/repo/ root@92.112.127.240:/opt/maven-staging/
+
       - name: Finalize deploy
-        run: ssh -i ~/.ssh/id_rsa root@92.112.127.240 "/usr/local/bin/maven-deploy.sh"
+        run: ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes root@92.112.127.240 "/usr/local/bin/maven-deploy.sh"

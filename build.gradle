@@ -53,10 +53,8 @@ publishing {
     }
 
     repositories {
-
         maven {
-            url = uri("scp://root@92.112.127.240:/opt/maven-staging")
+            url = layout.buildDirectory.dir("repo")
         }
-
     }
 }

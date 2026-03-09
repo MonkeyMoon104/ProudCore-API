@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'it.proud'
-version = '1.0.0'
+version = System.getenv("RELEASE_VERSION") ?: "1.0.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -39,12 +39,24 @@ dependencies {
 }
 
 publishing {
+
     publications {
-        maven(MavenPublication) {
-            groupId    = 'it.proud'
+
+        mavenJava(MavenPublication) {
+            groupId = 'it.proud'
             artifactId = 'proudcore-api'
-            version    = '1.0.0'
+            version = project.version
+
             from components.java
         }
+
+    }
+
+    repositories {
+
+        maven {
+            url = uri("scp://root@IP_DELLA_TUA_VPS:/opt/maven-staging")
+        }
+
     }
 }

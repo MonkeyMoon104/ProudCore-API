@@ -1,45 +1,39 @@
-name: JitPack Build Status
+name: Publish Maven
 
 on:
   push:
     tags:
-      - '*'
+      - "v*"
 
 jobs:
-  check-build:
+
+  publish:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Wait for JitPack build
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Extract version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Setup SSH
         run: |
-          TAG=${GITHUB_REF_NAME}
-          REPO=${GITHUB_REPOSITORY}
-          BUILD_URL="https://jitpack.io/com/github/${REPO}/${TAG}/build.log"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H IP_DELLA_VPS >> ~/.ssh/known_hosts
 
-          echo "Checking build for $TAG"
+      - name: Publish artifact
+        run: ./gradlew publish --no-daemon
 
-          for i in {1..30}; do
-            RESPONSE=$(curl -s $BUILD_URL)
-
-            if echo "$RESPONSE" | grep -q "BUILD SUCCESS"; then
-              STATUS="✅ BUILD SUCCESS"
-              break
-            fi
-
-            if echo "$RESPONSE" | grep -q "BUILD FAILED"; then
-              STATUS="❌ BUILD FAILED"
-              break
-            fi
-
-            echo "Still building..."
-            sleep 20
-          done
-
-          if [ -z "$STATUS" ]; then
-            STATUS="⚠️ BUILD STATUS UNKNOWN"
-          fi
-
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d "{\"content\":\"📦 JitPack build per **${TAG}**\n${STATUS}\n🔗 https://jitpack.io/#${REPO}/${TAG}\"}" \
-          ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Finalize deploy
+        run: ssh -i ~/.ssh/id_rsa root@IP_DELLA_VPS "/usr/local/bin/maven-deploy.sh"

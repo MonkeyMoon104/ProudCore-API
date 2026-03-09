@@ -29,6 +29,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 92.112.127.240 >> ~/.ssh/known_hosts
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Publish artifact
         run: ./gradlew publish --no-daemon
 

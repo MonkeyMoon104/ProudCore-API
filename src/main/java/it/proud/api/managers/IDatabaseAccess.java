@@ -1,11 +1,11 @@
 package it.proud.api.managers;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 /**
  * Provides external ProudCore modules with controlled access to the shared

@@ -1,42 +1,45 @@
-name: Publish Maven
+name: JitPack Build Status
 
 on:
   push:
     tags:
-      - "v*"
+      - '*'
 
 jobs:
-  publish:
+  check-build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Extract version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-
-      - name: Setup SSH
+      - name: Wait for JitPack build
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H 92.112.127.240 >> ~/.ssh/known_hosts
+          TAG=${GITHUB_REF_NAME}
+          REPO=${GITHUB_REPOSITORY}
+          BUILD_URL="https://jitpack.io/com/github/${REPO}/${TAG}/build.log"
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+          echo "Checking build for $TAG"
 
-      - name: Build local Maven repo
-        run: ./gradlew publish --no-daemon
+          for i in {1..30}; do
+            RESPONSE=$(curl -s $BUILD_URL)
 
-      - name: Upload repo to staging
-        run: rsync -av --delete -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" build/repo/ root@92.112.127.240:/opt/maven-staging/
+            if echo "$RESPONSE" | grep -q "BUILD SUCCESS"; then
+              STATUS="✅ BUILD SUCCESS"
+              break
+            fi
 
-      - name: Finalize deploy
-        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes root@92.112.127.240 "/usr/local/bin/maven-deploy.sh"
+            if echo "$RESPONSE" | grep -q "BUILD FAILED"; then
+              STATUS="❌ BUILD FAILED"
+              break
+            fi
+
+            echo "Still building..."
+            sleep 20
+          done
+
+          if [ -z "$STATUS" ]; then
+            STATUS="⚠️ BUILD STATUS UNKNOWN"
+          fi
+
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\":\"📦 JitPack build per **${TAG}**\n${STATUS}\n🔗 https://jitpack.io/#${REPO}/${TAG}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}

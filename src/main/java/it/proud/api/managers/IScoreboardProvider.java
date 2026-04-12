@@ -1,5 +1,6 @@
 package it.proud.api.managers;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,4 +60,17 @@ public interface IScoreboardProvider {
      * @return non-null map of {@code templateName -> ScoreboardTemplateSet}
      */
     Map<String, ScoreboardTemplateSet> getTemplates();
+
+    /**
+     * Optional pre-validation hook executed by ProudCore before loading templates.
+     *
+     * <p>Return precise, human-readable reasons when provider configuration is invalid
+     * (for example missing java/bedrock sections in external YAML). If at least one
+     * reason is returned, provider registration/refresh is rejected.</p>
+     *
+     * @return non-null list of validation errors; empty list when valid
+     */
+    default List<String> validateTemplateRequirements() {
+        return List.of();
+    }
 }
